@@ -10,18 +10,30 @@
     <result column="email" jdbcType="VARCHAR" property="email" />
     <result column="age" jdbcType="INTEGER" property="age" />
     <result column="admin" jdbcType="BIT" property="admin" />
-    <result column="dept_id" jdbcType="BIGINT" property="deptId" />
+    <!--维护one方对象-->
+    <association property="dept" javaType="Department" columnPrefix="dept_">
+      <id column="id" jdbcType="BIGINT" property="id" />
+      <result column="name" jdbcType="VARCHAR" property="name" />
+    </association>
+
+    <!--
+        维护many方关系
+            property="roles" : Employee对象关联的Role实体对象(字段)名
+            column="id" : 根据Employee对象中的id通过employee_role表关联查询到role表中的数据
+            select="cn.wolfcode.rbac.mapper.RoleMapper.selectByEmployeeId" : 关联查询时所调用的SQL语句,调用该SQL语句时,将column="id"传过去
+      -->
+    <collection property="roles" column="id" select="com.zzp.RBAC.mappers.RoleMapper.selectByEmployeeId"/>
   </resultMap>
   <sql id="Base_Column_List">
     <!--@mbg.generated-->
     id, `name`, `password`, email, age, `admin`, dept_id
   </sql>
   <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
-    <!--@mbg.generated-->
-    select 
-    <include refid="Base_Column_List" />
-    from employee
-    where id = #{id,jdbcType=BIGINT}
+    select
+    e.id, e.name, e.password, e.email, e.age, e.admin,
+    d.id dept_id, d.name dept_name
+    <include refid="base_table"/>
+    where e.id = #{employeeId,jdbcType=BIGINT}
   </select>
   <delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
     <!--@mbg.generated-->
@@ -29,11 +41,10 @@
     where id = #{id,jdbcType=BIGINT}
   </delete>
   <insert id="insert" keyColumn="id" keyProperty="id" parameterType="com.zzp.RBAC.domain.Employee" useGeneratedKeys="true">
-    <!--@mbg.generated-->
-    insert into employee (`name`, `password`, email, 
-      age, `admin`, dept_id)
-    values (#{name,jdbcType=VARCHAR}, #{password,jdbcType=VARCHAR}, #{email,jdbcType=VARCHAR}, 
-      #{age,jdbcType=INTEGER}, #{admin,jdbcType=BIT}, #{deptId,jdbcType=BIGINT})
+    insert into employee (name, password, email,
+    age, admin, dept_id)
+    values (#{name,jdbcType=VARCHAR}, #{password,jdbcType=VARCHAR}, #{email,jdbcType=VARCHAR},
+    #{age,jdbcType=INTEGER}, #{admin,jdbcType=BIT}, #{dept.id,jdbcType=BIGINT})
   </insert>
   <insert id="insertSelective" keyColumn="id" keyProperty="id" parameterType="com.zzp.RBAC.domain.Employee" useGeneratedKeys="true">
     <!--@mbg.generated-->
@@ -54,9 +65,9 @@
       <if test="admin != null">
         `admin`,
       </if>
-      <if test="deptId != null">
-        dept_id,
-      </if>
+<!--      <if test="deptId != null">-->
+<!--        dept_id,-->
+<!--      </if>-->
     </trim>
     <trim prefix="values (" suffix=")" suffixOverrides=",">
       <if test="name != null">
@@ -74,9 +85,9 @@
       <if test="admin != null">
         #{admin,jdbcType=BIT},
       </if>
-      <if test="deptId != null">
-        #{deptId,jdbcType=BIGINT},
-      </if>
+<!--      <if test="deptId != null">-->
+<!--        #{deptId,jdbcType=BIGINT},-->
+<!--      </if>-->
     </trim>
   </insert>
   <update id="updateByPrimaryKeySelective" parameterType="com.zzp.RBAC.domain.Employee">
@@ -98,27 +109,25 @@
       <if test="admin != null">
         `admin` = #{admin,jdbcType=BIT},
       </if>
-      <if test="deptId != null">
-        dept_id = #{deptId,jdbcType=BIGINT},
-      </if>
+<!--      <if test="deptId != null">-->
+<!--        dept_id = #{deptId,jdbcType=BIGINT},-->
+<!--      </if>-->
     </set>
     where id = #{id,jdbcType=BIGINT}
   </update>
   <update id="updateByPrimaryKey" parameterType="com.zzp.RBAC.domain.Employee">
-    <!--@mbg.generated-->
     update employee
-    set `name` = #{name,jdbcType=VARCHAR},
-      `password` = #{password,jdbcType=VARCHAR},
-      email = #{email,jdbcType=VARCHAR},
-      age = #{age,jdbcType=INTEGER},
-      `admin` = #{admin,jdbcType=BIT},
-      dept_id = #{deptId,jdbcType=BIGINT}
+    set name = #{name,jdbcType=VARCHAR},
+    email = #{email,jdbcType=VARCHAR},
+    age = #{age,jdbcType=INTEGER},
+    admin = #{admin,jdbcType=BIT},
+    dept_id = #{dept.id,jdbcType=BIGINT}
     where id = #{id,jdbcType=BIGINT}
   </update>
 
-  <select id="findAll" resultMap="BaseResultMap">
-    select * from employee
-  </select>
+<!--  <select id="findAll" resultMap="BaseResultMap">-->
+<!--    select * from employee-->
+<!--  </select>-->
 
   <select id="findByNameAndPassword" resultMap="BaseResultMap">
     select * from employee where name=#{username} and password=#{password}
@@ -136,4 +145,35 @@
   <select id="findRoleCount" resultType="integer">
     select count(*) from role
   </select>
+
+  <!--查询分页数据-->
+  <select id="findAll" resultMap="BaseResultMap">
+    select
+    e.id, e.name, e.email, e.age, e.admin,
+    d.id dept_id, d.name dept_name
+    <include refid="base_table"/>
+    <include refid="base_where"/>
+  </select>
+  <!--sql片段-->
+  <sql id="base_table">
+    from employee e
+        left join department d on e.dept_id=d.id
+  </sql>
+  <sql id="base_where">
+    <where>
+      <if test="keyword!=null and keyword!=''">
+        and (e.name like concat('%',#{keyword},'%') or e.email like concat('%',#{keyword},'%'))
+      </if>
+      <if test="deptId>0">
+        and e.dept_id=#{deptId}
+      </if>
+    </where>
+  </sql>
+  <delete id="deleteRelation">
+    delete from employee_role
+    where employee_id=#{employeeId}
+  </delete>
+    <insert id="insertRelation">
+        insert into employee_role(employee_id, role_id) value(#{employeeId},#{roleId});
+    </insert>
 </mapper>

@@ -9,4 +9,8 @@
         <setting name="aggressiveLazyLoading" value="false"/>
         <setting name="lazyLoadTriggerMethods" value="clone"/>
     </settings>
+    <!--引入pageHelper分页插件，注意plugin标签位置-->
+    <plugins>
+        <plugin interceptor="com.github.pagehelper.PageInterceptor"/>
+    </plugins>
 </configuration>

@@ -1,6 +1,8 @@
 package com.zzp.RBAC.domain;
 
 import java.io.Serializable;
+import java.util.List;
+
 import lombok.Data;
 
 @Data
@@ -35,10 +37,10 @@ public class Employee implements Serializable {
     */
     private Boolean admin;
 
-    /**
-    * 关联字段:部门ID
-    */
-    private Long deptId;
-
     private static final long serialVersionUID = 1L;
+
+    //关联一方对象
+    private Department dept;
+//    关联many方对象
+    private List<Role> roles;
 }

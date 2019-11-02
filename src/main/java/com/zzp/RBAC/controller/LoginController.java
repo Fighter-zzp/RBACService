@@ -7,6 +7,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.SessionAttributes;
+import org.springframework.web.bind.support.SessionStatus;
 import org.springframework.web.servlet.ModelAndView;
 
 import javax.servlet.http.HttpSession;
@@ -29,10 +30,19 @@ public class LoginController {
             return "index";
         }
     }
-    @RequestMapping("loginout")
-    public String loginout(HttpSession session){
+    @RequestMapping("loginOut")
+    public String loginOut(HttpSession session, SessionStatus sessionStatus){
         //销毁session
         session.invalidate();
+        //清除SessionAttributes
+        sessionStatus.setComplete();
         return "redirect:/login.jsp";
     }
+
+    @RequestMapping("home")
+    public String home(Model model){
+        model.addAttribute("count",employeeService.saveCount());
+        return "index";
+    }
+
 }

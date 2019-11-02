@@ -8,7 +8,7 @@ import javax.servlet.http.HttpServletResponse;
 
 public class LoginInterceptor extends HandlerInterceptorAdapter {
     //放行的url
-    private String[] urls = {"login","base","assert"};
+    private String[] urls = {"login"};
     /**
      * 请求Controller之前执行preHandler()方法
      * @param request
@@ -26,9 +26,12 @@ public class LoginInterceptor extends HandlerInterceptorAdapter {
             return true;
         }else {
             var user = request.getSession().getAttribute("employee");
-            if (user!=null)  return true;
+            if (user == null){
+                response.sendRedirect("redirect:login.jsp");
+                return false;
+            }
+            return true;
         }
-        return true;
     }
 
     /**
@@ -38,6 +41,7 @@ public class LoginInterceptor extends HandlerInterceptorAdapter {
      */
     private boolean checkURL(String url){
         for (String u : urls) {
+//            System.out.println(url+":"+u+"-->"+url.contains(u));
             if (url.contains(u)){
                 return true;
             }
